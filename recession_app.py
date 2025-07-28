@@ -81,7 +81,7 @@ with col1:
     gdp = get_fred_series("A191RL1Q225SBEA", "GDP QoQ (%)")
     plot_indicator("GDP Growth (QoQ)", gdp, "Macroeconomic", threshold=0)
 with col2:
-    cci = get_fred_series("CONCCONF", "Consumer Confidence")
+    cci = get_fred_series("UMCSENT", "Consumer Confidence")
     plot_indicator("Consumer Confidence", cci, "Macroeconomic", threshold=80)
 
 # --- MARKET-BASED ---
