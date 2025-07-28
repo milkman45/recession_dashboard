@@ -16,7 +16,6 @@ st.markdown("Tracking recession risk using real-time macro, credit, and consumer
 
 # --- TIMEFRAME SELECTOR ---
 timeframe = st.selectbox("Select timeframe:", ["YTD", "1Y", "3Y", "5Y", "10Y", "Max"])
-
 today = datetime.date.today()
 timeframe_map = {
     "YTD": datetime.date(today.year, 1, 1),
@@ -67,17 +66,31 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
 
         st.markdown(f"**Latest:** {latest_val:.2f} {status}" if latest_val else "No data")
 
-        data = data.reset_index().rename(columns={"index": "Date"})
+        df = data.reset_index().rename(columns={"index": "Date"})
+        y_col = df.columns[1]
         y_axis = alt.Y(
-            data.columns[1],
+            y_col,
             title="",
             scale=alt.Scale(domainMin=y_min) if y_min is not None else alt.Undefined
         )
-        chart = alt.Chart(data).mark_line().encode(
+
+        line = alt.Chart(df).mark_line().encode(
             x=alt.X("Date:T", axis=alt.Axis(format="%b-%y", title="Date")),
             y=y_axis,
-            tooltip=["Date", data.columns[1]]
-        ).properties(height=200)
+            tooltip=["Date", y_col]
+        )
+
+        # Min/Max points
+        min_row = df.loc[df[y_col].idxmin()]
+        max_row = df.loc[df[y_col].idxmax()]
+        min_point = alt.Chart(pd.DataFrame([min_row])).mark_point(color="blue", size=80).encode(
+            x="Date:T", y=y_col, tooltip=["Date", y_col]
+        )
+        max_point = alt.Chart(pd.DataFrame([max_row])).mark_point(color="red", size=80).encode(
+            x="Date:T", y=y_col, tooltip=["Date", y_col]
+        )
+
+        chart = (line + min_point + max_point).properties(height=200)
         st.altair_chart(chart, use_container_width=True)
 
 # --- MACROECONOMIC ---
@@ -86,8 +99,7 @@ col1, col2 = st.columns(2)
 with col1:
     gdp = get_fred_series("A191RL1Q225SBEA", "GDP QoQ (%)")
     plot_indicator("GDP Growth (QoQ)", gdp, "Macroeconomic", threshold=0)
-    
-    # Inflation (YoY) calculation
+
     cpi = get_fred_series("CPIAUCSL", "CPI Index")
     cpi["Inflation (YoY %)"] = cpi["CPI Index"].pct_change(periods=12) * 100
     inflation = cpi[["Inflation (YoY %)"]].dropna()
