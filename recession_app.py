@@ -44,11 +44,15 @@ def get_yahoo_series(ticker, label):
 
 def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=None):
     with st.container():
+        if data.empty:
+            st.warning(f"{name} – No data available for selected timeframe.")
+            return
+        
         st.markdown(f"**{category} → {name}**")
 
-        latest_val = data.iloc[-1].values[0] if not data.empty else None
+        latest_val = data.iloc[-1].values[0]
         status = ""
-        if latest_val is not None and threshold is not None:
+        if threshold is not None:
             if reverse:
                 if latest_val > threshold:
                     status = "🔴"
@@ -64,7 +68,7 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
                 else:
                     status = "🟢"
 
-        st.markdown(f"**Latest:** {latest_val:.2f} {status}" if latest_val else "No data")
+        st.markdown(f"**Latest:** {latest_val:.2f} {status}")
 
         df = data.reset_index().rename(columns={"index": "Date"})
         y_col = df.columns[1]
@@ -89,6 +93,20 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
         max_point = alt.Chart(pd.DataFrame([max_row])).mark_point(color="red", size=80).encode(
             x="Date:T", y=y_col, tooltip=["Date", y_col]
         )
+
+        # Min/Max labels
+        min_label = alt.Chart(pd.DataFrame([min_row])).mark_text(
+            align="left", dx=5, dy=-10, color="blue"
+        ).encode(
+            x="Date:T", y=y_col, text=alt.Text(y_col, format=".2f")
+        )
+
+        max_label = alt.Chart(pd.DataFrame([max_row])).mark_text(
+            align="left", dx=5, dy=-10, color="red"
+        ).encode(
+            x="Date:T", y=y_col, text=alt.Text(y_col, format=".2f")
+        )
+
 
         chart = (line + min_point + max_point).properties(height=200)
         st.altair_chart(chart, use_container_width=True)
