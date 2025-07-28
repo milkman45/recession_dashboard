@@ -85,9 +85,19 @@ col1, col2 = st.columns(2)
 with col1:
     gdp = get_fred_series("A191RL1Q225SBEA", "GDP QoQ (%)")
     plot_indicator("GDP Growth (QoQ)", gdp, "Macroeconomic", threshold=0)
+    
+    # Inflation (YoY) calculation
+    cpi = get_fred_series("CPIAUCSL", "CPI Index")
+    cpi["Inflation (YoY %)"] = cpi["CPI Index"].pct_change(periods=12) * 100
+    inflation = cpi[["Inflation (YoY %)"]].dropna()
+    plot_indicator("Inflation (YoY %)", inflation, "Macroeconomic", threshold=2, reverse=True)
+
 with col2:
     cci = get_fred_series("UMCSENT", "Consumer Confidence")
     plot_indicator("Consumer Confidence", cci, "Macroeconomic", threshold=80, y_min=20)
+
+    unemployment = get_fred_series("UNRATE", "Unemployment Rate")
+    plot_indicator("Unemployment Rate", unemployment, "Macroeconomic", threshold=5, reverse=True)
 
 # --- MARKET-BASED ---
 st.header("📈 Market-Based Indicators")
