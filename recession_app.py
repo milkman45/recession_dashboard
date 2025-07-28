@@ -39,8 +39,12 @@ cpi = get_fred_series('CPIAUCSL', 'CPI Index')
 
 # --- Yahoo Finance Data ---
 def get_yahoo_series(ticker, label):
-    df = yf.download(ticker, start=start_date)
-    return pd.DataFrame(df['Close'], columns=[label])
+    df = yf.download(ticker, period="1y", progress=False)
+    if df.empty or 'Close' not in df:
+        return pd.DataFrame(columns=[label])  # return empty DataFrame with correct column
+    df = df[['Close']].dropna()
+    df.columns = [label]
+    return df
 
 sp500 = get_yahoo_series('^GSPC', 'S&P 500')
 vix = get_yahoo_series('^VIX', 'VIX')
