@@ -42,7 +42,7 @@ def get_yahoo_series(ticker, label):
     df.columns = [label]
     return df
 
-def plot_indicator(name, data, category, threshold=None, reverse=False):
+def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=None):
     with st.container():
         st.markdown(f"**{category} → {name}**")
 
@@ -67,9 +67,14 @@ def plot_indicator(name, data, category, threshold=None, reverse=False):
         st.markdown(f"**Latest:** {latest_val:.2f} {status}" if latest_val else "No data")
 
         data = data.reset_index().rename(columns={"index": "Date"})
+        y_axis = alt.Y(
+            data.columns[1],
+            title="",
+            scale=alt.Scale(domainMin=y_min) if y_min is not None else alt.Undefined
+        )
         chart = alt.Chart(data).mark_line().encode(
             x=alt.X("Date:T", axis=alt.Axis(format="%b-%y", title="Date")),
-            y=alt.Y(data.columns[1], title=""),
+            y=y_axis,
             tooltip=["Date", data.columns[1]]
         ).properties(height=200)
         st.altair_chart(chart, use_container_width=True)
@@ -82,7 +87,7 @@ with col1:
     plot_indicator("GDP Growth (QoQ)", gdp, "Macroeconomic", threshold=0)
 with col2:
     cci = get_fred_series("UMCSENT", "Consumer Confidence")
-    plot_indicator("Consumer Confidence", cci, "Macroeconomic", threshold=80)
+    plot_indicator("Consumer Confidence", cci, "Macroeconomic", threshold=80, y_min=20)
 
 # --- MARKET-BASED ---
 st.header("📈 Market-Based Indicators")
@@ -101,18 +106,18 @@ with col1:
     yield_curve = get_fred_series("T10Y2Y", "10Y-2Y Spread")
     plot_indicator("10Y-2Y Treasury Spread", yield_curve, "Credit", threshold=0)
 with col2:
-    lending = get_fred_series("DRTSCILM", "Bank Lending Standards")
-    plot_indicator("Bank Lending Standards", lending, "Credit", threshold=10, reverse=True)
+    lending = get_fred_series("DRTSCILM", "Bank Lending Standards (C&I Loans)")
+    plot_indicator("Bank Lending Standards (C&I Loans)", lending, "Credit", threshold=10, reverse=True)
 
 # --- CONSUMER BEHAVIOR ---
 st.header("🍽️ Consumer Activity Indicators")
 col1, col2 = st.columns(2)
 with col1:
-    restaurants = get_fred_series("RSFS", "Restaurant & Bar Sales")
+    restaurants = get_fred_series("RSFSDP", "Restaurant & Bar Sales")
     plot_indicator("Restaurant/Bar Sales", restaurants, "Consumer", threshold=100)
 with col2:
-    air_traffic = get_fred_series("TOTTRNSA", "Airline Passengers")
-    plot_indicator("Passenger Air Travel", air_traffic, "Consumer", threshold=60000)
+    air_traffic = get_fred_series("ENPLANE", "Air Travel Enplanements")
+    plot_indicator("Air Travel Enplanements", air_traffic, "Consumer", threshold=60000)
 
 st.markdown("---")
 st.caption("Data from FRED & Yahoo Finance | Dashboard by Levi Jobe")
