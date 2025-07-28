@@ -7,7 +7,7 @@ import altair as alt
 import os
 
 # --- CONFIG ---
-FRED_API_KEY = os.getenv("FRED_API_KEY") or 'YOUR_API_KEY_HERE'  # replace if not using secrets.toml
+FRED_API_KEY = st.secrets.get("FRED_API_KEY")
 fred = Fred(api_key=FRED_API_KEY)
 
 st.set_page_config(page_title="Recession Indicator Dashboard", layout="wide")
