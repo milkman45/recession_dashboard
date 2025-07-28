@@ -15,12 +15,13 @@ st.title("📉 Recession Indicator Dashboard")
 st.markdown("Tracking recession risk using real-time macro, credit, and consumer indicators")
 
 # --- TIMEFRAME SELECTOR ---
-timeframe = st.selectbox("Select timeframe:", ["YTD", "1Y", "5Y", "10Y", "Max"])
+timeframe = st.selectbox("Select timeframe:", ["YTD", "1Y", "3", "5Y", "10Y", "Max"])
 
 today = datetime.date.today()
 timeframe_map = {
     "YTD": datetime.date(today.year, 1, 1),
     "1Y": today - datetime.timedelta(days=365),
+    "3Y": today - datetime.timedelta(days=3 * 365),
     "5Y": today - datetime.timedelta(days=5 * 365),
     "10Y": today - datetime.timedelta(days=10 * 365),
     "Max": datetime.date(2000, 1, 1)
