@@ -144,7 +144,8 @@ yields["3Y"] = get_fred_series("GS3", "3Y")
 yields["5Y"] = get_fred_series("GS5", "5Y")
 yields["10Y"] = get_fred_series("GS10", "10Y")
 yields = yields.dropna()
-yields = yields[yields.index >= start_date]
+yields.index = pd.to_datetime(yields.index)
+yields = yields[yields.index >= pd.to_datetime(start_date)]
 yields_long = yields.reset_index().melt(id_vars="index", var_name="Maturity", value_name="Yield")
 yields_long.rename(columns={"index": "Date"}, inplace=True)
 
