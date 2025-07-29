@@ -139,8 +139,7 @@ with col2:
 # --- YIELD CURVE ---
 st.header("💵 Treasury Yield Curve")
 yields = pd.DataFrame()
-yields["1Y"] = get_fred_series("GS1", "1Y")
-yields["3Y"] = get_fred_series("GS3", "3Y")
+yields["2Y"] = get_fred_series("GS2", "2Y")
 yields["5Y"] = get_fred_series("GS5", "5Y")
 yields["10Y"] = get_fred_series("GS10", "10Y")
 yields = yields.dropna()
@@ -178,8 +177,8 @@ with col2:
 st.header("✈️ Consumer Mobility")
 col1, col2 = st.columns(2)
 with col1:
-    gas = get_fred_series("MGACSR", "Gasoline Demand")
-    plot_indicator("Weekly Gasoline Demand", gas, "Mobility", threshold=7000)
+    gas = get_fred_series("DGOERC1Q027SBEA", "Real Gasoline/Energy Consumption")
+    plot_indicator("Real Gasoline/Energy Consumption", gas, "Mobility", threshold=100)
 
 with col2:
     air_traffic = get_fred_series("ENPLANE", "Air Travel Enplanements")
