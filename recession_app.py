@@ -47,7 +47,7 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
         if data.empty:
             st.warning(f"{name} – No data available for selected timeframe.")
             return
-        
+
         st.markdown(f"**{category} → {name}**")
 
         latest_val = data.iloc[-1].values[0]
@@ -84,7 +84,6 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
             tooltip=["Date", y_col]
         )
 
-        # Min/Max points
         min_row = df.loc[df[y_col].idxmin()]
         max_row = df.loc[df[y_col].idxmax()]
         min_point = alt.Chart(pd.DataFrame([min_row])).mark_point(color="blue", size=80).encode(
@@ -94,25 +93,22 @@ def plot_indicator(name, data, category, threshold=None, reverse=False, y_min=No
             x="Date:T", y=y_col, tooltip=["Date", y_col]
         )
 
-        # Min/Max labels
         min_label = alt.Chart(pd.DataFrame([min_row])).mark_text(
             align="left", dx=5, dy=-10, color="blue"
         ).encode(
             x="Date:T", y=y_col, text=alt.Text(y_col, format=".2f")
         )
-
         max_label = alt.Chart(pd.DataFrame([max_row])).mark_text(
             align="left", dx=5, dy=-10, color="red"
         ).encode(
             x="Date:T", y=y_col, text=alt.Text(y_col, format=".2f")
         )
 
-
-        chart = (line + min_point + max_point).properties(height=200)
+        chart = (line + min_point + max_point + min_label + max_label).properties(height=200)
         st.altair_chart(chart, use_container_width=True)
 
 # --- MACROECONOMIC ---
-st.header("📊 Macroeconomic Indicators")
+st.header("📊 Economic Conditions")
 col1, col2 = st.columns(2)
 with col1:
     gdp = get_fred_series("A191RL1Q225SBEA", "GDP QoQ (%)")
@@ -124,14 +120,14 @@ with col1:
     plot_indicator("Inflation (YoY %)", inflation, "Macroeconomic", threshold=2, reverse=True)
 
 with col2:
-    cci = get_fred_series("UMCSENT", "Consumer Confidence")
-    plot_indicator("Consumer Confidence", cci, "Macroeconomic", threshold=80, y_min=20)
-
     unemployment = get_fred_series("UNRATE", "Unemployment Rate")
     plot_indicator("Unemployment Rate", unemployment, "Macroeconomic", threshold=5, reverse=True)
 
-# --- MARKET-BASED ---
-st.header("📈 Market-Based Indicators")
+    inflation_exp = get_fred_series("T5YIE", "5Y Inflation Expectations")
+    plot_indicator("Inflation Expectations (5Y)", inflation_exp, "Macroeconomic", threshold=2.5, reverse=True)
+
+# --- MARKET INDICATORS ---
+st.header("📈 Market Indicators")
 col1, col2 = st.columns(2)
 with col1:
     sp500 = get_yahoo_series("^GSPC", "S&P 500")
@@ -140,25 +136,53 @@ with col2:
     vix = get_yahoo_series("^VIX", "VIX")
     plot_indicator("VIX Volatility Index", vix, "Market", threshold=20, reverse=True)
 
-# --- CREDIT / LENDING ---
-st.header("💳 Credit & Lending Indicators")
-col1, col2 = st.columns(2)
-with col1:
-    yield_curve = get_fred_series("T10Y2Y", "10Y-2Y Spread")
-    plot_indicator("10Y-2Y Treasury Spread", yield_curve, "Credit", threshold=0)
-with col2:
-    lending = get_fred_series("DRTSCILM", "Bank Lending Standards (C&I Loans)")
-    plot_indicator("Bank Lending Standards (C&I Loans)", lending, "Credit", threshold=10, reverse=True)
+# --- YIELD CURVE ---
+st.header("💵 Treasury Yield Curve")
+yields = pd.DataFrame()
+yields["1Y"] = get_fred_series("GS1", "1Y")
+yields["3Y"] = get_fred_series("GS3", "3Y")
+yields["5Y"] = get_fred_series("GS5", "5Y")
+yields["10Y"] = get_fred_series("GS10", "10Y")
+yields = yields.dropna()
+yields = yields[yields.index >= start_date]
+yields_long = yields.reset_index().melt(id_vars="index", var_name="Maturity", value_name="Yield")
+yields_long.rename(columns={"index": "Date"}, inplace=True)
 
-# --- CONSUMER BEHAVIOR ---
-st.header("🍽️ Consumer Activity Indicators")
+yield_chart = alt.Chart(yields_long).mark_line().encode(
+    x="Date:T",
+    y="Yield:Q",
+    color="Maturity:N",
+    tooltip=["Date", "Maturity", "Yield"]
+).properties(title="Treasury Yields by Maturity", height=300)
+st.altair_chart(yield_chart, use_container_width=True)
+
+# --- CONSUMER HEALTH ---
+st.header("🚗 Consumer Financial Health")
 col1, col2 = st.columns(2)
 with col1:
-    restaurants = get_fred_series("RSFSDP", "Restaurant & Bar Sales")
-    plot_indicator("Restaurant/Bar Sales", restaurants, "Consumer", threshold=100)
+    delinquencies = get_fred_series("DRCCLACBS", "Credit Card Delinquency Rate")
+    plot_indicator("Credit Card Delinquency Rate", delinquencies, "Consumer", threshold=3, reverse=True)
+
+    savings = get_fred_series("PSAVERT", "Personal Savings Rate")
+    plot_indicator("Personal Savings Rate", savings, "Consumer", threshold=5)
+
+with col2:
+    loans = get_fred_series("CONSUMERLOANS", "Consumer Loans")
+    plot_indicator("Consumer Loans at Banks", loans, "Consumer", threshold=3000)
+
+    retail_sales = get_fred_series("RSXFS", "Retail Sales (ex-Autos)")
+    plot_indicator("Retail Sales (Ex-Autos)", retail_sales, "Consumer", threshold=100)
+
+# --- CONSUMER MOBILITY ---
+st.header("✈️ Consumer Mobility")
+col1, col2 = st.columns(2)
+with col1:
+    gas = get_fred_series("MGACSR", "Gasoline Demand")
+    plot_indicator("Weekly Gasoline Demand", gas, "Mobility", threshold=7000)
+
 with col2:
     air_traffic = get_fred_series("ENPLANE", "Air Travel Enplanements")
-    plot_indicator("Air Travel Enplanements", air_traffic, "Consumer", threshold=60000)
+    plot_indicator("Air Travel Enplanements", air_traffic, "Mobility", threshold=60000)
 
 st.markdown("---")
 st.caption("Data from FRED & Yahoo Finance | Dashboard by Levi Jobe")
