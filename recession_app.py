@@ -168,7 +168,7 @@ with col1:
     plot_indicator("Personal Savings Rate", savings, "Consumer", threshold=5)
 
 with col2:
-    loans = get_fred_series("CONSUMERLOANS", "Consumer Loans")
+    loans = get_fred_series("CONSUMER", "Consumer Loans")
     plot_indicator("Consumer Loans at Banks", loans, "Consumer", threshold=3000)
 
     retail_sales = get_fred_series("RSXFS", "Retail Sales (ex-Autos)")
