@@ -185,4 +185,4 @@ with col2:
     plot_indicator("Air Travel Enplanements", air_traffic, "Mobility", threshold=60000)
 
 st.markdown("---")
-st.caption("Data from FRED & Yahoo Finance | Dashboard by Levi Jobe")
+st.caption("Data from FRED & Yahoo Finance")
